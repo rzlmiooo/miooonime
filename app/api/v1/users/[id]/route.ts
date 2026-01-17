@@ -1,17 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 
-type Params = {
-  params: {
+type Context = {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function GET(
-  req: Request,
-  { params }: Params
+  req: NextRequest,
+  { params }: Context
 ) {
+  const { id } = await params;
   const auth = req.headers.get("authorization");
 
   if (!auth) {
@@ -22,13 +23,13 @@ export async function GET(
     const token = auth.replace("Bearer ", "");
     const payload: any = verifyToken(token);
 
-    if (payload.id !== Number(params.id)) {
+    if (payload.id !== Number(id)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     const [rows]: any = await db.query(
       "SELECT id, name, email FROM users WHERE id = ?",
-      [params.id]
+      [id]
     );
 
     if (!rows.length) {
@@ -42,9 +43,10 @@ export async function GET(
 }
 
 export async function PUT(
-  req: Request,
-  { params }: Params
+  req: NextRequest,
+  { params }: Context
 ) {
+  const { id } = await params;
   const auth = req.headers.get("authorization");
 
   if (!auth) {
@@ -55,7 +57,7 @@ export async function PUT(
     const token = auth.replace("Bearer ", "");
     const payload: any = verifyToken(token);
 
-    if (payload.id !== Number(params.id)) {
+    if (payload.id !== Number(id)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
@@ -63,7 +65,7 @@ export async function PUT(
 
     await db.query(
       "UPDATE users SET name = ?, email = ? WHERE id = ?",
-      [name, email, params.id]
+      [name, email, id]
     );
 
     return NextResponse.json({ message: "User updated" });
@@ -73,9 +75,10 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: Request,
-  { params }: Params
+  req: NextRequest,
+  { params }: Context
 ) {
+  const { id } = await params;
   const auth = req.headers.get("authorization");
 
   if (!auth) {
@@ -86,13 +89,13 @@ export async function DELETE(
     const token = auth.replace("Bearer ", "");
     const payload: any = verifyToken(token);
 
-    if (payload.id !== Number(params.id)) {
+    if (payload.id !== Number(id)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     await db.query(
       "DELETE FROM users WHERE id = ?",
-      [params.id]
+      [id]
     );
 
     return NextResponse.json({ message: "User deleted" });
