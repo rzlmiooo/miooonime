@@ -1,8 +1,3 @@
 import mysql from "mysql2/promise";
 
-export const db = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "next_fullstack",
-});
+export const db = mysql.createPool(process.env.DB_URL!);
